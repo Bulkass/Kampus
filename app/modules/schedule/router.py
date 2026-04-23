@@ -172,3 +172,60 @@ async def get_teacher_weekly_schedule(
         schedule[day].sort(key=lambda x: x["start_time"])
 
     return schedule
+
+
+@router.get("/teacher/lesson/{lesson_id}/details")
+async def get_lesson_details_for_teacher(
+        lesson_id: int,
+        target_date: str = Query(..., description="Дата в формате YYYY-MM-DD"),
+        current_user: User = Depends(get_current_teacher),
+        db: Session = Depends(get_db)
+):
+    """
+    SF-01.3: Детальная информация о паре для преподавателя
+    """
+    lesson = db.query(Lesson).filter(
+        Lesson.id == lesson_id,
+        Lesson.teacher_id == current_user.id
+    ).first()
+
+    if not lesson:
+        raise HTTPException(404, "Урок не найден или нет доступа")
+
+    # Применяем замены
+    lesson_data = {
+        "id": lesson.id,
+        "subject": {
+            "id": lesson.subject.id,
+            "name": lesson.subject.name,
+            "code": lesson.subject.code
+        },
+        "group": {
+            "id": lesson.group.id,
+            "name": lesson.group.name,
+            "students": [
+                {
+                    "id": s.id,
+                    "full_name": s.user.full_name
+                } for s in lesson.group.students
+            ]
+        },
+        "room": lesson.room,
+        "start_time": lesson.start_time.strftime("%H:%M"),
+        "end_time": lesson.end_time.strftime("%H:%M"),
+        "assignments": [
+            {
+                "id": a.id,
+                "title": a.title,
+                "description": a.description,
+                "deadline": a.deadline.isoformat() if a.deadline else None,
+                "file_path": a.file_path,
+                "created_at": a.created_at.isoformat()
+            } for a in lesson.assignments
+        ]
+    }
+
+    # Применяем замены на конкретную дату
+    lesson_data = apply_replacements(lesson_data, lesson.id, target_date, db)
+
+    return lesson_data
