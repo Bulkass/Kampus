@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# PyCharm / IDE
+.idea/
+*.iml
+.vscode/
+
+# Переменные окружения и секреты
+.env
+*.db
+*.sqlite
+
+# Загруженные файлы (если хранятся локально)
+uploads/
+submissions/
+static/uploads/
