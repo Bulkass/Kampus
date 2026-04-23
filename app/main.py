@@ -3,50 +3,34 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
-# Импорт из database.py
 from app.core.database import engine, Base, init_db
+from app.core.config import settings
 
-# Импорт ВСЕХ моделей (чтобы создать таблицы)
+# Импорт всех моделей
 from app.core.models import User, Student, Teacher, Group
 from app.modules.schedule.models import Subject, Lesson, Replacement
 from app.modules.assignments.models import Assignment, Submission
 from app.modules.gradebook.models import Attendance, Grade
 
-# ============================================
-# СОЗДАНИЕ ПРИЛОЖЕНИЯ
-# ============================================
-
+# Создание приложения
 app = FastAPI(
-    title="LMS Core API",
-    description="Ядро системы управления обучением",
-    version="1.0.0",
+    title=settings.APP_NAME,
+    description="API для системы управления обучением",
+    version=settings.APP_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# ============================================
-# CORS НАСТРОЙКИ
-# ============================================
-
+# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-    ],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ============================================
-# ПОДКЛЮЧЕНИЕ РОУТЕРОВ
-# ============================================
-
+# Подключение роутеров
 from app.modules.auth.router import router as auth_router
 app.include_router(auth_router)
 
@@ -56,62 +40,54 @@ app.include_router(schedule_router)
 from app.modules.gradebook.router import router as gradebook_router
 app.include_router(gradebook_router)
 
-from app.modules.assignments.router_teacher import router as teacher_assignments_router
-app.include_router(teacher_assignments_router)
+from app.modules.assignments.router_teacher import router as teacher_router
+app.include_router(teacher_router)
 
-from app.modules.assignments.router_student import router as student_assignments_router
-app.include_router(student_assignments_router)
+from app.modules.assignments.router_student import router as student_router
+app.include_router(student_router)
 
 from app.modules.assignments.router_grading import router as grading_router
 app.include_router(grading_router)
 
-# ============================================
-# СТАТИЧЕСКИЕ ФАЙЛЫ
-# ============================================
+# Статические файлы
+os.makedirs(settings.ASSIGNMENTS_UPLOAD_DIR, exist_ok=True)
+os.makedirs(settings.SUBMISSIONS_UPLOAD_DIR, exist_ok=True)
+app.mount("/media", StaticFiles(directory=settings.UPLOAD_DIR), name="media")
 
-os.makedirs("media", exist_ok=True)
-os.makedirs("media/assignments", exist_ok=True)
-os.makedirs("media/submissions", exist_ok=True)
-
-app.mount("/media", StaticFiles(directory="media"), name="media")
-
-# ============================================
-# СОБЫТИЯ ЗАПУСКА
-# ============================================
-
+# События запуска
 @app.on_event("startup")
-async def startup_event():
-    """Создание таблиц при запуске"""
-    print("🚀 Запуск приложения...")
+async def startup():
+    """Запуск приложения"""
+    settings.print_settings()
+    print("📦 Создание таблиц...")
     Base.metadata.create_all(bind=engine)
-    print("✅ Таблицы созданы")
+    print("✅ Приложение готово к работе!")
 
-# ============================================
-# КОРНЕВЫЕ ЭНДПОИНТЫ
-# ============================================
-
+# Корневые эндпоинты
 @app.get("/")
 async def root():
     return {
-        "app": "LMS Core API",
-        "version": "1.0.0",
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "status": "running",
-        "docs": "/docs"
+        "docs": "/docs",
+        "db_type": settings.DB_TYPE,
     }
 
 @app.get("/health")
-async def health_check():
-    return {"status": "healthy", "database": "connected"}
+async def health():
+    return {
+        "status": "healthy",
+        "database": settings.DB_TYPE,
+        "debug": settings.DEBUG,
+    }
 
-# ============================================
-# ЗАПУСК
-# ============================================
-
+# Запуск
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
     )
