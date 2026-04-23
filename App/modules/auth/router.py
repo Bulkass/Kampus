@@ -98,7 +98,6 @@ async def logout(
     return {"message": "Successfully logged out"}
 
 # Middleware для проверки blacklist
-# app/core/dependencies.py
 from fastapi import HTTPException, status
 
 async def check_token_not_blacklisted(token: str):
