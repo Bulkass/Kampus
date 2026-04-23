@@ -117,3 +117,75 @@ async def get_group_gradebook(
     gradebook = calculate_student_averages(gradebook, db)
 
     return gradebook
+
+
+@router.get("/attendance/stats/{student_id}")
+async def get_student_attendance_stats(
+        student_id: int,
+        start_date: str = Query(...),
+        end_date: str = Query(...),
+        current_user: User = Depends(get_current_teacher),
+        db: Session = Depends(get_db)
+):
+    """
+    SF-02.4: Статистика пропусков студента за период
+    """
+    stats = calculate_attendance_stats(student_id, start_date, end_date, db)
+    return stats
+
+
+@router.get("/attendance/group/{group_id}/stats")
+async def get_group_attendance_stats(
+        group_id: int,
+        month: int = Query(None),
+        current_user: User = Depends(get_current_teacher),
+        db: Session = Depends(get_db)
+):
+    """
+    SF-02.4: Статистика пропусков по всей группе
+    """
+    from datetime import datetime, timedelta
+
+    # Определяем период по месяцу
+    if month:
+        year = datetime.now().year
+        start_date = datetime(year, month, 1).date().isoformat()
+        if month == 12:
+            end_date = datetime(year, 12, 31).date().isoformat()
+        else:
+            end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
+            end_date = end_date.isoformat()
+    else:
+        # Текущий месяц
+        now = datetime.now()
+        start_date = datetime(now.year, now.month, 1).date().isoformat()
+        end_date = now.date().isoformat()
+
+    # Получаем статистику по каждому студенту
+    students = db.query(Student).filter(Student.group_id == group_id).all()
+
+    group_stats = {
+        "group_id": group_id,
+        "period": {"start": start_date, "end": end_date},
+        "students": []
+    }
+
+    total_attendance_rate = 0
+
+    for student in students:
+        stats = calculate_attendance_stats(student.id, start_date, end_date, db)
+        group_stats["students"].append({
+            "student_id": student.id,
+            "full_name": student.user.full_name,
+            "attendance_rate": stats["attendance_rate"],
+            "absent": stats["absent"],
+            "late": stats["late"]
+        })
+        total_attendance_rate += stats["attendance_rate"]
+
+    # Средняя посещаемость по группе
+    group_stats["average_attendance_rate"] = round(
+        total_attendance_rate / len(students), 1
+    ) if students else 0
+
+    return group_stats

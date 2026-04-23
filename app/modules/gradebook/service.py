@@ -46,3 +46,39 @@ def calculate_subject_average_for_group(group_id: int, subject_id: int, db: Sess
         return 0.0
 
     return round(mean([g.grade_value for g in grades]), 2)
+
+
+def calculate_attendance_stats(student_id: int, start_date: str, end_date: str, db: Session) -> Dict:
+    """
+    SF-02.4: Расчёт статистики пропусков за период
+    """
+    from app.modules.gradebook.models import Attendance
+    from datetime import datetime
+
+    start = datetime.fromisoformat(start_date)
+    end = datetime.fromisoformat(end_date)
+
+    attendances = db.query(Attendance).filter(
+        Attendance.student_id == student_id,
+        Attendance.date >= start,
+        Attendance.date <= end
+    ).all()
+
+    total_lessons = len(attendances)
+    attended = sum(1 for a in attendances if a.is_present)
+    absent = total_lessons - attended
+    late = sum(1 for a in attendances if a.late_minutes > 0)
+
+    attendance_rate = (attended / total_lessons * 100) if total_lessons > 0 else 0
+
+    return {
+        "total_lessons": total_lessons,
+        "attended": attended,
+        "absent": absent,
+        "late": late,
+        "attendance_rate": round(attendance_rate, 1),
+        "period": {
+            "start": start_date,
+            "end": end_date
+        }
+    }
