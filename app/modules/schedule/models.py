@@ -45,3 +45,16 @@ class Lesson(Base):
     teacher = relationship("Teacher", back_populates="lessons")
     replacements = relationship("Replacement", back_populates="lesson")
     assignments = relationship("Assignment", back_populates="lesson")
+class Replacement(Base):
+    __tablename__ = "replacements"
+
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"))
+    date = Column(DateTime, nullable=False)
+    new_room = Column(String(50))
+    new_teacher_id = Column(Integer, ForeignKey("teachers.id"))
+    status = Column(String(20), default="active")  # active, cancelled
+    reason = Column(String(255))
+
+    lesson = relationship("Lesson", back_populates="replacements")
+    new_teacher = relationship("Teacher", foreign_keys=[new_teacher_id])

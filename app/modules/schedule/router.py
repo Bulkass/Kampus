@@ -68,3 +68,54 @@ async def get_student_weekly_schedule(
         schedule[day].sort(key=lambda x: x["start_time"])
 
     return schedule
+
+
+@router.get("/student/week/with-replacements")
+async def get_student_schedule_with_replacements(
+        week_offset: int = Query(0),
+        current_user: User = Depends(get_current_student),
+        db: Session = Depends(get_db)
+):
+    """
+    SF-01.1 + SF-01.4: Расписание с учетом замен
+    """
+    student = db.query(Student).filter(Student.id == current_user.id).first()
+    if not student:
+        return {"error": "Студент не найден"}
+
+    week_dates = get_week_dates(week_offset)
+    days_map = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+
+    lessons = db.query(Lesson).filter(
+        Lesson.group_id == student.group_id
+    ).all()
+
+    schedule = {day: [] for day in days_map}
+    schedule["week_dates"] = week_dates
+
+    for lesson in lessons:
+        day_name = days_map[lesson.day_of_week]
+        target_date = week_dates[day_name]
+
+        lesson_data = {
+            "id": lesson.id,
+            "subject_name": lesson.subject.name,
+            "teacher_name": lesson.teacher.user.full_name,
+            "start_time": lesson.start_time.strftime("%H:%M"),
+            "end_time": lesson.end_time.strftime("%H:%M"),
+            "room": lesson.room,
+            "assignments": [
+                {
+                    "id": a.id,
+                    "title": a.title,
+                    "deadline": a.deadline.isoformat() if a.deadline else None
+                } for a in lesson.assignments
+            ]
+        }
+
+        # SF-01.4: Применяем замены
+        lesson_data = apply_replacements(lesson_data, lesson.id, target_date, db)
+
+        schedule[day_name].append(lesson_data)
+
+    return schedule
