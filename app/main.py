@@ -1,36 +1,25 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 
-from app.core.database import engine, Base, init_db
-from app.core.config import settings
+from app.core.database import engine, Base
 
-# Импорт всех моделей
-from app.core.models import User, Student, Teacher, Group
-from app.modules.schedule.models import Subject, Lesson, Replacement
-from app.modules.assignments.models import Assignment, Submission
-from app.modules.gradebook.models import Attendance, Grade
-
-# Создание приложения
-app = FastAPI(
-    title=settings.APP_NAME,
-    description="API для системы управления обучением",
-    version=settings.APP_VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
+# Импорт ВСЕХ моделей из одного файла
+from app.models import (
+    User, Group, Student, Teacher,
+    Subject, Lesson, Replacement,
+    Assignment, Submission,
+    Attendance, Grade, Recommendation
 )
 
-# Настройка CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title="LMS Kampus", version="1.0.0", docs_url="/docs")
 
-# Подключение роутеров
+# CORS
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+# API роутеры
 from app.modules.auth.router import router as auth_router
 app.include_router(auth_router)
 
@@ -49,45 +38,22 @@ app.include_router(student_router)
 from app.modules.assignments.router_grading import router as grading_router
 app.include_router(grading_router)
 
-# Статические файлы
-os.makedirs(settings.ASSIGNMENTS_UPLOAD_DIR, exist_ok=True)
-os.makedirs(settings.SUBMISSIONS_UPLOAD_DIR, exist_ok=True)
-app.mount("/media", StaticFiles(directory=settings.UPLOAD_DIR), name="media")
+# Статика
+os.makedirs("static", exist_ok=True)
+os.makedirs("media", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
-# События запуска
-@app.on_event("startup")
-async def startup():
-    """Запуск приложения"""
-    settings.print_settings()
-    print("📦 Создание таблиц...")
-    Base.metadata.create_all(bind=engine)
-    print("✅ Приложение готово к работе!")
-
-# Корневые эндпоинты
 @app.get("/")
 async def root():
-    return {
-        "app": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "status": "running",
-        "docs": "/docs",
-        "db_type": settings.DB_TYPE,
-    }
+    return FileResponse("static/index.html")
 
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
-        "database": settings.DB_TYPE,
-        "debug": settings.DEBUG,
-    }
+@app.on_event("startup")
+async def startup():
+    Base.metadata.create_all(bind=engine)
+    print("🚀 Сервер запущен: http://localhost:8000")
+    print("📚 API Docs: http://localhost:8000/docs")
 
-# Запуск
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG,
-    )
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

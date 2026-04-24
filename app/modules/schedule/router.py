@@ -5,11 +5,11 @@ from datetime import datetime
 
 # Правильные импорты из core
 from app.core.database import get_db
-from app.core.models import User, Student, Teacher, Group
+from app.models import User, Student, Teacher, Group
 from app.core.dependencies import get_current_user, get_current_student, get_current_teacher
 
 # Импорты из этого же модуля
-from app.modules.schedule.models import Lesson, Subject, Replacement
+from app.models import Lesson, Subject, Replacement
 from app.modules.schedule.service import get_week_dates, apply_replacements
 
 router = APIRouter(prefix="/schedule", tags=["Schedule"])

@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from app.core.database import get_db
 from app.core.dependencies import get_current_teacher
-from app.core.models import User, Group, Student
-from app.modules.gradebook.models import Grade, Attendance
+from app.models import User, Student, Group
+from app.models import Grade, Attendance
 from app.modules.gradebook.service import calculate_student_averages, calculate_attendance_stats
 
 router = APIRouter(prefix="/gradebook", tags=["Gradebook"])
@@ -32,7 +32,7 @@ async def get_group_gradebook(
     ).order_by(Student.user.has(full_name=None)).all()
 
     # Получаем все предметы группы (через уроки)
-    from app.modules.schedule.models import Lesson, Subject
+    from app.models import Lesson, Subject
     subjects = db.query(Subject).join(Lesson).filter(
         Lesson.group_id == group_id
     ).distinct().all()

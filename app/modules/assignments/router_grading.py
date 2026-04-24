@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.core.database import get_db
 from app.core.dependencies import get_current_teacher
-from app.core.models import User
-from app.modules.assignments.models import Assignment, Submission
-from app.modules.gradebook.models import Grade
+from app.models import User
+from app.models import Assignment, Submission
+from app.models import Grade
 
 router = APIRouter(prefix="/grading", tags=["Grading"])
 

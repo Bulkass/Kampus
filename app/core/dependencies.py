@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
-from app.core.models import User, UserRole
+from app.models import User, UserRole
 from app.core.security import decode_token
 
 # OAuth2 схема

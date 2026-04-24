@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 
 # Импорты из ядра
 from app.core.database import get_db
-from app.core.models import User, Student
+from app.models import User, Student
 from app.core.dependencies import get_current_student
 
 # Импорты моделей из других модулей
-from app.modules.assignments.models import Assignment, Submission
-from app.modules.schedule.models import Lesson
+from app.models import Assignment, Submission
+from app.models import Lesson
 
 router = APIRouter(prefix="/student/assignments", tags=["Student Assignments"])
 

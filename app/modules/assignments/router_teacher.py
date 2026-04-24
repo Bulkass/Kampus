@@ -6,9 +6,9 @@ import uuid
 from datetime import datetime
 from app.core.database import get_db
 from app.core.dependencies import get_current_teacher
-from app.core.models import User
-from app.modules.assignments.models import Assignment
-from app.modules.schedule.models import Lesson
+from app.models import User
+from app.models import Assignment
+from app.models import Lesson
 
 router = APIRouter(prefix="/teacher/assignments", tags=["Teacher Assignments"])
 

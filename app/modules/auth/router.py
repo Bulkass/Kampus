@@ -5,7 +5,7 @@ from datetime import timedelta
 from pydantic import BaseModel, EmailStr
 
 from app.core.database import get_db
-from app.core.models import User
+from app.models import User, UserRole
 from app.core.security import (
     verify_password,
     create_access_token,
@@ -273,7 +273,6 @@ async def create_test_user(
         db: Session = Depends(get_db)
 ):
     """Создание тестового пользователя (только для разработки)"""
-    from app.core.models import UserRole
 
     if role not in ["student", "teacher", "admin"]:
         raise HTTPException(
