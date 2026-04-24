@@ -1,3 +1,4 @@
+# app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -5,6 +6,7 @@ from fastapi.responses import FileResponse
 import os
 
 from app.core.database import engine, Base
+from app.core.config import settings
 
 # Импорт ВСЕХ моделей из одного файла
 from app.models import (
@@ -23,36 +25,47 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 from app.modules.auth.router import router as auth_router
 app.include_router(auth_router)
 
-from app.modules.schedule.router import router as schedule_router
-app.include_router(schedule_router)
-
-from app.modules.gradebook.router import router as gradebook_router
-app.include_router(gradebook_router)
-
-from app.modules.assignments.router_teacher import router as teacher_router
-app.include_router(teacher_router)
-
-from app.modules.assignments.router_student import router as student_router
-app.include_router(student_router)
-
-from app.modules.assignments.router_grading import router as grading_router
-app.include_router(grading_router)
-
-# Статика
+# ============================================
+# СТАТИЧЕСКИЕ ФАЙЛЫ — ВАЖНО! Должно быть ДО главной страницы
+# ============================================
 os.makedirs("static", exist_ok=True)
-os.makedirs("media", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/media", StaticFiles(directory="media"), name="media")
 
+# ============================================
+# ГЛАВНАЯ СТРАНИЦА
+# ============================================
 @app.get("/")
 async def root():
     return FileResponse("static/index.html")
 
+@app.get("/login")
+async def login_page():
+    return FileResponse("static/index.html")
+
+@app.get("/student-schedule")
+async def student_page():
+    return FileResponse("static/index.html")
+
+@app.get("/teacher-schedule")
+async def teacher_page():
+    return FileResponse("static/index.html")
+
+@app.get("/assignments")
+async def assignments_page():
+    return FileResponse("static/index.html")
+
+@app.get("/gradebook")
+async def gradebook_page():
+    return FileResponse("static/index.html")
+
+# ============================================
+# ЗАПУСК
+# ============================================
 @app.on_event("startup")
 async def startup():
     Base.metadata.create_all(bind=engine)
-    print("🚀 Сервер запущен: http://localhost:8000")
-    print("📚 API Docs: http://localhost:8000/docs")
+    print("🚀 Сервер: http://localhost:8000")
+    print("📄 Вход: http://localhost:8000/login")
 
 if __name__ == "__main__":
     import uvicorn
