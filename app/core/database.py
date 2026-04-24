@@ -13,11 +13,6 @@ load_dotenv()
 # КОНФИГУРАЦИЯ БАЗЫ ДАННЫХ
 # ============================================
 
-# Вариант 1: SQLite (для разработки)
-SQLITE_DATABASE_URL = "sqlite:///./school.db"
-
-
-# Вариант 2: SQL Server (для продакшена)
 def get_sql_server_url() -> str:
     """
     Формирует URL подключения к SQL Server
@@ -63,7 +58,7 @@ USE_SQL_SERVER = os.getenv("USE_SQL_SERVER", "false").lower() == "true"
 if USE_SQL_SERVER:
     DATABASE_URL = get_sql_server_url()
 else:
-    DATABASE_URL = os.getenv("DATABASE_URL", SQLITE_DATABASE_URL)
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
 print(f"🔗 Подключение к БД: {DATABASE_URL[:50]}...")
 

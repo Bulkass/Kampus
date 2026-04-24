@@ -3,28 +3,6 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 import datetime
 
-
-class Group(Base):
-    __tablename__ = "groups"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    year = Column(Integer)
-
-    students = relationship("Student", back_populates="group")
-    lessons = relationship("Lesson", back_populates="group")
-
-
-class Subject(Base):
-    __tablename__ = "subjects"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
-    code = Column(String(50), unique=True)
-
-    lessons = relationship("Lesson", back_populates="subject")
-
-
 class Lesson(Base):
     __tablename__ = "lessons"
 
