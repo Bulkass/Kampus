@@ -33,7 +33,7 @@ def calculate_subject_average_for_group(group_id: int, subject_id: int, db: Sess
     """
     SF-02.3: Средний балл группы по предмету
     """
-    from app.modules.gradebook.models import Grade
+    from app.models import Grade, Attendance
 
     grades = db.query(Grade).filter(
         Grade.subject_id == subject_id,
@@ -52,7 +52,8 @@ def calculate_attendance_stats(student_id: int, start_date: str, end_date: str, 
     """
     SF-02.4: Расчёт статистики пропусков за период
     """
-    from app.modules.gradebook.models import Attendance
+    from app.models import Attendance
+
     from datetime import datetime
 
     start = datetime.fromisoformat(start_date)

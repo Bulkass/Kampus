@@ -45,7 +45,7 @@ def apply_replacements(lesson_data: Dict[str, Any], lesson_id: int, target_date:
     Returns:
         Обновленные данные урока с учетом замен
     """
-    from app.modules.schedule.models import Replacement
+    from app.models import Replacement
 
     # Ищем замену на эту дату
     replacement = db.query(Replacement).filter(
